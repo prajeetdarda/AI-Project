@@ -1,14 +1,17 @@
 # web/api/app/model_loader.py
 
+import os
 import json
 import time
 import tempfile
+import pathlib
 from pathlib import Path
 from typing import Dict, Any
 
 import numpy as np
 import torch
 from panns_inference import AudioTagging
+import requests
 
 from .config import (
     HEAD_WEIGHTS,
@@ -22,24 +25,50 @@ from .config import (
 from .audio import load_audio_32k
 from .model_def import MTModel
 
-import os, pathlib, requests
+# Keep CPU usage tame on small instances
+torch.set_num_threads(max(1, int(os.getenv("TORCH_NUM_THREADS", "1"))))
 
 # --------- Remote checkpoint bootstrap (for Render etc.) ----------
 PANN_CKPT = os.getenv("PANN_CHECKPOINT_PATH", "/opt/render/project/src/data/Cnn14.pth")
-PANN_URL  = os.getenv("PANN_CHECKPOINT_URL", "")  # e.g. your public URL to Cnn14_mAP=0.431.pth
+PANN_URL  = os.getenv("PANN_CHECKPOINT_URL", "")  # e.g. your GitHub Release asset URL
 
 def ensure_checkpoint() -> str:
-    p = pathlib.Path(PANN_CKPT)
-    p.parent.mkdir(parents=True, exist_ok=True)
-    if p.exists():
-        return str(p)
+    """
+    Ensure the PANNs checkpoint exists at PANN_CKPT.
+    - If missing and PANN_URL is set, download it (streaming, with basic validation).
+    - If missing and PANN_URL is not set, raise an actionable error.
+    """
+    dst = pathlib.Path(PANN_CKPT)
+    dst.parent.mkdir(parents=True, exist_ok=True)
+
+    if dst.exists() and dst.stat().st_size > 1024 * 1024:  # >1MB sanity
+        return str(dst)
+
     if not PANN_URL:
-        raise RuntimeError("PANN_CHECKPOINT_URL not set and checkpoint file missing.")
-    r = requests.get(PANN_URL, timeout=60)
-    r.raise_for_status()
-    with open(p, "wb") as f:
-        f.write(r.content)
-    return str(p)
+        raise RuntimeError(
+            "PANN checkpoint missing and PANN_CHECKPOINT_URL is not set.\n"
+            f"Expected at: {dst}\n"
+            "Set PANN_CHECKPOINT_URL (e.g., your GitHub Release asset URL) or bake the file into the image."
+        )
+
+    # Stream download
+    print(f"[bootstrap] Downloading PANN checkpoint from {PANN_URL} ...")
+    with requests.get(PANN_URL, stream=True, timeout=120) as r:
+        r.raise_for_status()
+        tmp = dst.with_suffix(".part")
+        with open(tmp, "wb") as f:
+            for chunk in r.iter_content(chunk_size=1024 * 1024):
+                if chunk:
+                    f.write(chunk)
+        tmp.replace(dst)
+
+    # quick size sanity (PANN Cnn14 is ~300MB)
+    sz = dst.stat().st_size
+    if sz < 50 * 1024 * 1024:
+        raise RuntimeError(f"Downloaded checkpoint looks too small ({sz} bytes): {dst}")
+
+    print(f"[bootstrap] Saved checkpoint -> {dst} ({sz/1024/1024:.1f} MB)")
+    return str(dst)
 
 
 class Predictor:
@@ -71,6 +100,9 @@ class Predictor:
         self.expected_d_in: int = int(sd["trunk.0.weight"].shape[1])
 
         # --- 3) Boot PANNs backbone ONCE using the resolved checkpoint ---
+        # (AudioTagging will ensure its label CSV in ~/panns_data; works fine on Render)
+        print(f"Checkpoint path: {ckpt_path}")
+        print("Using CPU.")
         self.panns = AudioTagging(checkpoint_path=ckpt_path, device="cpu")
 
         # --- 4) Probe actual runtime embedding dim from PANNs ---
@@ -154,7 +186,7 @@ class Predictor:
             }
         }
 
-    # ---------- Public entry point ----------
+    # ---------- Public entry points ----------
 
     def predict_from_bytes(self, content: bytes, suffix: str = ".wav") -> Dict[str, Any]:
         with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
@@ -164,8 +196,10 @@ class Predictor:
         try:
             return self._predict_from_path(p)
         finally:
-            try: p.unlink()
-            except Exception: pass
+            try:
+                p.unlink()
+            except Exception:
+                pass
 
 
 # ---------- Singleton accessor ----------
