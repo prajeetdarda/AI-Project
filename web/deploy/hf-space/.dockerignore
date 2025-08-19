@@ -1,9 +1,0 @@
-**/__pycache__/
-**/.pytest_cache/
-**/.DS_Store
-**/.git
-**/.gitignore
-**/.gitattributes
-**/.env
-**/.venv
-node_modules/

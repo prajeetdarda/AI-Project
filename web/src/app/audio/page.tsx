@@ -446,31 +446,35 @@ export default function AudioPage() {
             </div>
             <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
               <li>
-                <b>Data curation:</b> I scraped and unified thousands of track
-                previews with metadata to build a benchmark dataset.
+                <b>Data curation:</b> Scraped and unified thousands of track
+                previews with metadata to build a benchmark dataset for
+                supervised learning.
               </li>
               <li>
-                <b>Embedding model:</b> I fine‑tuned PANNs (Pretrained Audio
-                Neural Networks, CNN14) via transfer learning for music
-                representation.
+                <b>Embedding model:</b> Fine-tuned PANNs (Pretrained Audio
+                Neural Networks, CNN14) via transfer learning for high-quality
+                music representation and embeddings.
               </li>
               <li>
-                <b>Feature prediction:</b> A multi‑task linear head predicts
-                Spotify‑style attributes (danceability, energy, acousticness,
-                etc.) from embeddings.
+                <b>Feature prediction:</b> Designed a multi-task linear head to
+                predict Spotify-style attributes (danceability, energy,
+                acousticness, etc.) directly from embeddings.
               </li>
               <li>
-                <b>Recommendation engine:</b> I pass the predicted features to
+                <b>Recommendation engine:</b> Integrated predicted features with
                 the Spotify Web API to retrieve musically aligned candidate
                 songs.
               </li>
               <li>
-                <b>LLM curation:</b> An OpenAI LLM refines the candidates, adds
-                concise rationales, and presents human‑like recommendations.
+                <b>LLM curation:</b> Leveraged OpenAI GPT to refine candidates,
+                generate concise rationales, and present human-like
+                recommendations.
               </li>
               <li>
-                <b>Stack:</b> FastAPI for inference, Next.js (App Router) for
-                UI, TailwindCSS for styling.
+                <b>Stack & Deployment:</b> FastAPI microservice for inference
+                deployed on Render; frontend built with Next.js (App Router) and
+                TailwindCSS; hosted on Vercel with GitHub CI/CD pipelines
+                enabling cloud-native, automated, and scalable deployments.
               </li>
             </ol>
             {/* <p className="mt-3 text-xs text-gray-500">
