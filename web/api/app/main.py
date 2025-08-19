@@ -15,6 +15,7 @@ except Exception:
 origins = [
     "http://localhost:3000",
     "https://ai-project-prajeet.vercel.app",
+    "https://huggingface.co/spaces/PrajeetDarda/prajeetdarda-audio-features-api",
 ]
 
 app = FastAPI(title="Audio → Spotify Features API", version="1.0")
