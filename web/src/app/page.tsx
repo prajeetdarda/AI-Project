@@ -23,6 +23,12 @@ export default function Home() {
             >
               Movie Recommendations
             </a>
+            <a
+              href="/audio"
+              className="inline-flex items-center justify-center px-12 py-6 text-2xl font-semibold text-white bg-green-600 rounded-xl shadow hover:bg-green-500 transition-colors w-full md:w-auto"
+            >
+              Song Recommendations
+            </a>
           </div>
         </section>
       </div>

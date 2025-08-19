@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+pydantic
+numpy
+torch==2.3.1
+torchaudio
+librosa
+panns-inference
+soundfile
+requests

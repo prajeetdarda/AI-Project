@@ -1,0 +1,10 @@
+pandas
+requests
+tenacity
+tqdm
+python-dotenv
+pydantic
+rapidfuzz
+ffmpeg-python
+librosa
+soundfile
