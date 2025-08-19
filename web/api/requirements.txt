@@ -1,10 +1,23 @@
-fastapi
-uvicorn[standard]
-pydantic
-numpy
-torch==2.3.1
-torchaudio
-librosa
-panns-inference
-soundfile
-requests
+# FastAPI stack
+fastapi==0.116.1
+uvicorn[standard]==0.30.6
+pydantic==2.11.7
+pydantic-core==2.27.2
+
+# Audio + ML
+numpy==1.26.4          # plays well with librosa/torchaudio on manylinux
+scipy==1.11.4
+librosa==0.10.2.post1
+soundfile==0.12.1
+audioread==3.0.1
+
+# Torch CPU (PyPI wheels exist for py3.11 manylinux)
+torch==2.5.1
+torchaudio==2.5.1
+
+# Inference helper + HTTP
+panns-inference==0.1.1
+requests==2.32.3
+
+# misc
+tqdm==4.66.5
