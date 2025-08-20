@@ -43,6 +43,57 @@ function pct(x: number) {
   return Math.round(v * 100);
 }
 
+/* -------------------- Demo fallback content -------------------- */
+const DEMO_FEATS: Features = {
+  acousticness: 0.22,
+  danceability: 0.71,
+  energy: 0.68,
+  instrumentalness: 0.12,
+  liveness: 0.11,
+  speechiness: 0.05,
+  tempo: 118,
+  valence: 0.56,
+  loudness: -8.7,
+  duration_ms: 205000,
+};
+
+const DEMO_RECS: Song[] = [
+  {
+    title: "Midnight City",
+    artist: "M83",
+    rationale: "Similar energy/valence; synth-forward textures",
+    sim: 0.83,
+  },
+  {
+    title: "Instant Crush",
+    artist: "Daft Punk",
+    rationale: "Danceability/tempo match; electronic palette",
+    sim: 0.81,
+  },
+  {
+    title: "The Less I Know The Better",
+    artist: "Tame Impala",
+    rationale: "Groove-aligned; mid‑tempo, warm timbre",
+    sim: 0.79,
+  },
+];
+
+/* -------------------- Timeout helper -------------------- */
+async function fetchWithTimeout(
+  input: RequestInfo,
+  init: RequestInit = {},
+  ms = 6500
+) {
+  const ctrl = new AbortController();
+  const id = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(input, { ...init, signal: ctrl.signal });
+    return res;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
 export default function AudioPage() {
   const [file, setFile] = useState<File | null>(null);
   const [feats, setFeats] = useState<Features | null>(null);
@@ -52,6 +103,10 @@ export default function AudioPage() {
   const [err, setErr] = useState<string | null>(null);
   const [showAbout, setShowAbout] = useState(false);
   const [defaultsUsed, setDefaultsUsed] = useState<Record<string, boolean>>({});
+
+  // demo flags (section-specific)
+  const [demoFeats, setDemoFeats] = useState(false);
+  const [demoRecs, setDemoRecs] = useState(false);
 
   // mic state
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
@@ -72,139 +127,141 @@ export default function AudioPage() {
       setRecs([]);
       setCands([]);
       setDefaultsUsed({});
+      setDemoFeats(false);
+      setDemoRecs(false);
 
       try {
-        // ---------- 1) FastAPI → /infer ----------
-        const tInfer0 = performance.now();
+        /* ---------- (A) Show demo immediately (optimistic UI) ---------- */
+        setFeats(DEMO_FEATS);
+        setRecs(DEMO_RECS);
+        setDemoFeats(true);
+        setDemoRecs(true);
+
+        /* ---------- (1) FastAPI → /infer (with timeout) ---------- */
         const fd = new FormData();
         fd.append("file", useFile);
         const inferUrl = joinUrl(API_BASE, "/infer");
 
-        console.log(
-          "[audio] POST",
-          inferUrl,
-          "file:",
-          useFile.name,
-          useFile.type,
-          useFile.size
-        );
-        const predRes = await fetch(inferUrl, { method: "POST", body: fd });
-        if (!predRes.ok) {
-          const txt = await predRes.text().catch(() => "");
-          console.error("[audio] /infer failed", predRes.status, txt);
-          throw new Error(`infer failed (${predRes.status}) ${txt}`);
-        }
-        const raw = await predRes.json();
-        console.log("[audio] /infer RAW:", raw);
-
-        const src: any =
-          raw &&
-          typeof raw === "object" &&
-          raw.features &&
-          typeof raw.features === "object"
-            ? raw.features
-            : raw;
-
-        const used: Record<string, boolean> = {};
-        const take = (name: keyof Features, fallback: number) => {
-          const v = (src as any)?.[name];
-          const num = typeof v === "number" ? v : Number(v);
-          const ok = Number.isFinite(num);
-          used[name as string] = !ok;
-          return ok ? (num as number) : fallback;
-        };
-
-        const fixed: Features = {
-          acousticness: take("acousticness", 0.5),
-          danceability: take("danceability", 0.5),
-          energy: take("energy", 0.5),
-          instrumentalness: take("instrumentalness", 0.0),
-          liveness: take("liveness", 0.15),
-          speechiness: take("speechiness", 0.05),
-          tempo: take("tempo", 110),
-          valence: take("valence", 0.5),
-          loudness: take("loudness", -12),
-          duration_ms: take("duration_ms", 210_000),
-        };
-
-        setDefaultsUsed(used);
-        setFeats(fixed);
-        console.log(
-          "[audio] /infer COERCED:",
-          fixed,
-          "defaultsUsed:",
-          used,
-          `(${Math.round(performance.now() - tInfer0)}ms)`
-        );
-
-        // ---------- 2) Next.js → /api/candidates ----------
-        const tCand0 = performance.now();
-        console.log("[audio] POST /api/candidates with features");
-        const candRes = await fetch("/api/candidates", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ features: fixed, topn: 10 }),
-        });
-        const candJson = await candRes.json().catch(() => ({}));
-        if (!candRes.ok) {
-          console.error(
-            "[audio] /api/candidates failed",
-            candRes.status,
-            candJson
+        let fixed: Features | null = null;
+        try {
+          const predRes = await fetchWithTimeout(
+            inferUrl,
+            { method: "POST", body: fd },
+            6500
           );
-          throw new Error(candJson?.error || "candidates failed");
+          if (!predRes.ok) {
+            const txt = await predRes.text().catch(() => "");
+            throw new Error(`infer failed (${predRes.status}) ${txt}`);
+          }
+          const raw = await predRes.json();
+          const src: any =
+            raw && typeof raw === "object" && raw.features && typeof raw.features === "object"
+              ? raw.features
+              : raw;
+
+          const used: Record<string, boolean> = {};
+          const take = (name: keyof Features, fallback: number) => {
+            const v = (src as any)?.[name];
+            const num = typeof v === "number" ? v : Number(v);
+            const ok = Number.isFinite(num);
+            used[name as string] = !ok;
+            return ok ? (num as number) : fallback;
+          };
+
+          fixed = {
+            acousticness: take("acousticness", DEMO_FEATS.acousticness),
+            danceability: take("danceability", DEMO_FEATS.danceability),
+            energy: take("energy", DEMO_FEATS.energy),
+            instrumentalness: take(
+              "instrumentalness",
+              DEMO_FEATS.instrumentalness
+            ),
+            liveness: take("liveness", DEMO_FEATS.liveness),
+            speechiness: take("speechiness", DEMO_FEATS.speechiness),
+            tempo: take("tempo", DEMO_FEATS.tempo),
+            valence: take("valence", DEMO_FEATS.valence),
+            loudness: take("loudness", DEMO_FEATS.loudness),
+            duration_ms: take("duration_ms", DEMO_FEATS.duration_ms ?? 210000),
+          };
+
+          setFeats(fixed); // overwrite demo features
+          setDefaultsUsed(used);
+          setDemoFeats(false); // real features loaded
+        } catch (e) {
+          // keep demo feats
+          console.warn("[audio] /infer fallback to demo:", e);
+          setDemoFeats(true);
         }
 
-        const arr: Song[] = Array.isArray(candJson)
-          ? candJson
-          : Array.isArray(candJson?.items)
-          ? candJson.items
-          : [];
-        const slimCands = arr
-          .filter((x) => x?.title && x?.artist)
-          .map(({ title, artist, sim }) => ({ title, artist, sim }));
+        /* ---------- (2) Next.js → /api/candidates (with timeout) ---------- */
+        try {
+          const candRes = await fetchWithTimeout(
+            "/api/candidates",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                features: fixed ?? DEMO_FEATS,
+                topn: 10,
+              }),
+            },
+            5000
+          );
 
-        setCands(slimCands);
-        console.log(
-          "[audio] candidates:",
-          slimCands,
-          `(${Math.round(performance.now() - tCand0)}ms)`
-        );
+          const candJson = await candRes.json().catch(() => ({}));
+          if (!candRes.ok)
+            throw new Error(candJson?.error || "candidates failed");
 
-        // ---------- 3) Next.js → /api/llm-recs ----------
-        const tLlm0 = performance.now();
-        console.log(
-          "[audio] POST /api/llm-recs (features + candidates, limit=20)"
-        );
-        const llmRes = await fetch("/api/llm-recs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            features: fixed,
-            candidates: slimCands.map(({ title, artist }) => ({
-              title,
-              artist,
-            })),
-            limit: 20,
-            avoid: recs.map(({ title, artist }) => ({ title, artist })),
-          }),
-        });
+          const arr: Song[] = Array.isArray(candJson)
+            ? candJson
+            : Array.isArray(candJson?.items)
+            ? candJson.items
+            : [];
+          const slimCands = arr
+            .filter((x) => x?.title && x?.artist)
+            .map(({ title, artist, sim }) => ({ title, artist, sim }));
 
-        const llmJson = await llmRes.json().catch(() => ({}));
-        if (!llmRes.ok) {
-          console.error("[audio] /api/llm-recs failed", llmRes.status, llmJson);
-          throw new Error(llmJson?.error || "llm error");
+          setCands(slimCands);
+        } catch (e) {
+          console.warn("[audio] /api/candidates fallback: keeping demo", e);
         }
 
-        const items: Song[] = Array.isArray(llmJson?.items)
-          ? llmJson.items
-          : [];
-        setRecs(items);
-        console.log(
-          "[audio] LLM items:",
-          items,
-          `(${Math.round(performance.now() - tLlm0)}ms)`
-        );
+        /* ---------- (3) Next.js → /api/llm-recs (with timeout) ---------- */
+        try {
+          const llmRes = await fetchWithTimeout(
+            "/api/llm-recs",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                features: fixed ?? DEMO_FEATS,
+                candidates: (cands.length ? cands : DEMO_RECS).map(
+                  ({ title, artist }) => ({ title, artist })
+                ),
+                limit: 20,
+                avoid: recs.map(({ title, artist }) => ({ title, artist })),
+              }),
+            },
+            5500
+          );
+
+          const llmJson = await llmRes.json().catch(() => ({}));
+          if (!llmRes.ok) throw new Error(llmJson?.error || "llm error");
+
+          const items: Song[] = Array.isArray(llmJson?.items)
+            ? llmJson.items
+            : [];
+          if (items.length) {
+            setRecs(items); // overwrite demo recs with real ones
+            setDemoRecs(false);
+          } else {
+            // if API returns empty, keep demo recs
+            setDemoRecs(true);
+          }
+        } catch (e) {
+          console.warn("[audio] /api/llm-recs fallback: keeping demo recs", e);
+          setDemoRecs(true);
+        }
 
         console.log(
           "[audio] total time:",
@@ -218,7 +275,7 @@ export default function AudioPage() {
         setBusy(false);
       }
     },
-    [file, recs]
+    [file, cands.length, recs]
   );
 
   // Microphone recording
@@ -370,7 +427,14 @@ export default function AudioPage() {
       {/* Predicted features */}
       {feats && (
         <section className="rounded-2xl border p-5 shadow-sm">
-          <h2 className="font-semibold mb-3">Predicted Audio Features</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold mb-3">Predicted Audio Features</h2>
+            {demoFeats && (
+              <span className="text-xs rounded-full border px-2 py-0.5 text-amber-700 border-amber-300 bg-amber-50">
+                demo results (API slow)
+              </span>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {featureCards}
           </div>
@@ -391,16 +455,16 @@ export default function AudioPage() {
       {/* Candidates */}
       {cands.length > 0 && (
         <section className="rounded-2xl border p-5 shadow-sm">
-          <h2 className="font-semibold mb-3">Top‑10 Dataset Candidates</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold mb-3">Top‑10 Dataset Candidates</h2>
+            {/* If you also want a chip here, you could add another demo flag for candidates */}
+          </div>
           <ol className="space-y-2 list-decimal list-inside">
             {cands.map((c, i) => (
               <li key={i}>
                 <span className="font-medium">{c.title}</span> — {c.artist}
                 {typeof c.sim === "number" ? (
-                  <span className="text-gray-400">
-                    {" "}
-                    · sim {c.sim.toFixed(3)}
-                  </span>
+                  <span className="text-gray-400"> · sim {c.sim.toFixed(3)}</span>
                 ) : null}
               </li>
             ))}
@@ -411,7 +475,14 @@ export default function AudioPage() {
       {/* LLM recommendations */}
       {recs.length > 0 && (
         <section className="rounded-2xl border p-5 shadow-sm">
-          <h2 className="font-semibold mb-3">Recommended Similar Songs</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold mb-3">Recommended Similar Songs</h2>
+            {demoRecs && (
+              <span className="text-xs rounded-full border px-2 py-0.5 text-amber-700 border-amber-300 bg-amber-50">
+                demo results (API slow)
+              </span>
+            )}
+          </div>
           <ol className="space-y-2 list-decimal list-inside">
             {recs.map((r, i) => (
               <li key={i}>
@@ -477,9 +548,6 @@ export default function AudioPage() {
                 enabling cloud-native, automated, and scalable deployments.
               </li>
             </ol>
-            {/* <p className="mt-3 text-xs text-gray-500">
-              API base: <code>{API_BASE}</code> · endpoint <code>/infer</code>
-            </p> */}
           </div>
         </div>
       )}
