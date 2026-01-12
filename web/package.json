@@ -19,7 +19,7 @@
     "dotenv": "^17.2.1",
     "langchain": "^0.3.30",
     "lucide-react": "^0.539.0",
-    "next": "15.4.6",
+    "next": "15.4.10",
     "openai": "^5.12.2",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^5.4.54",
