@@ -331,22 +331,22 @@ export default function AudioPage() {
       return (
         <div
           key={i}
-          className={`rounded border p-3 ${
-            warn ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-white"
+          className={`rounded-lg border p-4 ${
+            warn ? "border-amber-300 bg-amber-50" : "border-gray-200 bg-gray-50"
           } shadow-sm`}
         >
-          <div className="flex items-center justify-between text-sm text-gray-700">
-            <span className="font-medium">{r.label}</span>
-            <span className="tabular-nums">{percent}%</span>
+          <div className="flex items-center justify-between text-sm mb-2">
+            <span className="font-semibold text-gray-900">{r.label}</span>
+            <span className="tabular-nums font-bold text-gray-900">{percent}%</span>
           </div>
-          <div className="mt-2 h-2 w-full rounded bg-gray-200">
+          <div className="h-2.5 w-full rounded-full bg-gray-200">
             <div
-              className="h-2 rounded bg-black"
+              className="h-2.5 rounded-full bg-gray-900"
               style={{ width: `${percent}%` }}
             />
           </div>
           {warn && (
-            <div className="mt-1 text-xs text-amber-700">default used</div>
+            <div className="mt-2 text-xs text-amber-700 font-medium">default used</div>
           )}
         </div>
       );
@@ -356,81 +356,103 @@ export default function AudioPage() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-10 space-y-6">
       {/* Header with "Behind the tech" */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Audio‑to‑Song Recommendations</h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-3xl font-bold text-gray-900">Audio-Based Music Discovery</h1>
         <button
-          className="text-sm px-3 py-1.5 rounded-full border border-gray-300 hover:bg-gray-50 flex items-center gap-2"
+          className="text-sm px-3 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 flex items-center gap-2 text-gray-700 transition-colors"
           onClick={() => setShowAbout(true)}
         >
-          Behind the tech{" "}
-          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border text-xs">
+          <span>Behind the Tech</span>
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-xs font-medium">
             ?
           </span>
         </button>
       </div>
 
-      {/* Upload + Analyze in one line */}
-      <div className="flex items-center gap-3">
-        <input
-          type="file"
-          accept="audio/*"
-          onChange={onPick}
-          className="border border-gray-300 bg-gray-100 text-gray-700 text-sm rounded-md px-3 py-2 cursor-pointer file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300"
-        />
-        <button
-          className="px-4 py-2 rounded bg-black text-white disabled:opacity-50"
-          onClick={() => run()}
-          disabled={!file || busy}
-        >
-          {busy ? "Processing..." : "Analyze & Recommend"}
-        </button>
-      </div>
+      <p className="text-gray-600 mb-6">
+        Fine-tuned PANNs (CNN14) for intelligent playlist generation from audio features
+      </p>
 
-      {/* OR divider */}
-      <div className="flex items-center justify-center my-2">
-        <span className="text-gray-500 font-semibold">OR</span>
-      </div>
+      {/* Upload section */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Upload an audio file
+          </label>
+          <div className="flex items-center gap-3">
+            <input
+              type="file"
+              accept="audio/*"
+              onChange={onPick}
+              className="flex-1 border border-gray-300 bg-white text-gray-700 text-sm rounded-lg px-3 py-2.5 cursor-pointer file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 transition-colors"
+            />
+            <button
+              className="px-6 py-2.5 rounded-lg bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors whitespace-nowrap"
+              onClick={() => run()}
+              disabled={!file || busy}
+            >
+              {busy ? "Processing..." : "Analyze & Recommend"}
+            </button>
+          </div>
+        </div>
 
-      {/* Mic controls */}
-      <div className="flex items-center gap-3">
-        {!recording ? (
-          <button
-            className="px-4 py-2 rounded bg-green-600 text-white"
-            onClick={startRecording}
-          >
-            Start Recording
-          </button>
-        ) : (
-          <button
-            className="px-4 py-2 rounded bg-red-600 text-white"
-            onClick={stopRecording}
-          >
-            Stop Recording
-          </button>
-        )}
-        {audioURL && <audio controls src={audioURL} className="ml-2" />}
+        {/* OR divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-200"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500 font-medium">OR</span>
+          </div>
+        </div>
+
+        {/* Mic controls */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Record audio
+          </label>
+          <div className="flex items-center gap-3">
+            {!recording ? (
+              <button
+                className="px-6 py-2.5 rounded-lg bg-green-600 text-white hover:bg-green-700 font-medium transition-colors"
+                onClick={startRecording}
+              >
+                Start Recording
+              </button>
+            ) : (
+              <button
+                className="px-6 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 font-medium transition-colors animate-pulse"
+                onClick={stopRecording}
+              >
+                Stop Recording
+              </button>
+            )}
+            {audioURL && <audio controls src={audioURL} className="flex-1" />}
+          </div>
+        </div>
       </div>
 
       {/* Errors / warnings */}
       {err && (
-        <div className="rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          {err}
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="text-red-700">{err}</p>
         </div>
       )}
       {anyDefaults && (
-        <div className="rounded border border-amber-200 bg-amber-50 p-3 text-amber-800">
-          Some feature values were missing; defaults used. Check console for raw
-          payload.
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <p className="text-amber-800">
+            Some feature values were missing; defaults used. Check console for raw payload.
+          </p>
         </div>
       )}
 
       {/* Predicted features */}
       {feats && (
-        <section className="rounded-2xl border p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold mb-3">Predicted Audio Features</h2>
+        <section className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Predicted Audio Features</h2>
             {demoFeats && (
-              <span className="text-xs rounded-full border px-2 py-0.5 text-amber-700 border-amber-300 bg-amber-50">
+              <span className="text-xs rounded-full border px-2.5 py-1 text-amber-700 border-amber-300 bg-amber-50">
                 demo results (API slow)
               </span>
             )}
@@ -438,33 +460,27 @@ export default function AudioPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {featureCards}
           </div>
-          <div className="mt-4 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full border px-2 py-1">
-              Tempo: <b>{Math.round(feats.tempo)} BPM</b>
+          <div className="mt-5 flex flex-wrap gap-2 text-sm">
+            <span className="rounded-full border border-gray-300 px-3 py-1.5 bg-gray-50">
+              Tempo: <b className="text-gray-900">{Math.round(feats.tempo)} BPM</b>
             </span>
-            <span className="rounded-full border px-2 py-1">
-              Loudness: <b>{feats.loudness.toFixed(1)} dB</b>
+            <span className="rounded-full border border-gray-300 px-3 py-1.5 bg-gray-50">
+              Loudness: <b className="text-gray-900">{feats.loudness.toFixed(1)} dB</b>
             </span>
-            {/* <span className="rounded-full border px-2 py-1">
-              Duration: <b>{msToMMSS(feats.duration_ms)}</b>
-            </span> */}
           </div>
         </section>
       )}
 
       {/* Candidates */}
       {cands.length > 0 && (
-        <section className="rounded-2xl border p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold mb-3">Top‑10 Dataset Candidates</h2>
-            {/* If you also want a chip here, you could add another demo flag for candidates */}
-          </div>
-          <ol className="space-y-2 list-decimal list-inside">
+        <section className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Top 10 Dataset Candidates</h2>
+          <ol className="space-y-2.5 list-decimal list-inside text-gray-700">
             {cands.map((c, i) => (
-              <li key={i}>
-                <span className="font-medium">{c.title}</span> — {c.artist}
+              <li key={i} className="leading-relaxed">
+                <span className="font-semibold text-gray-900">{c.title}</span> — {c.artist}
                 {typeof c.sim === "number" ? (
-                  <span className="text-gray-400"> · sim {c.sim.toFixed(3)}</span>
+                  <span className="text-gray-400 text-sm"> · similarity {c.sim.toFixed(3)}</span>
                 ) : null}
               </li>
             ))}
@@ -474,21 +490,21 @@ export default function AudioPage() {
 
       {/* LLM recommendations */}
       {recs.length > 0 && (
-        <section className="rounded-2xl border p-5 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold mb-3">Recommended Similar Songs</h2>
+        <section className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Recommended Similar Songs</h2>
             {demoRecs && (
-              <span className="text-xs rounded-full border px-2 py-0.5 text-amber-700 border-amber-300 bg-amber-50">
+              <span className="text-xs rounded-full border px-2.5 py-1 text-amber-700 border-amber-300 bg-amber-50">
                 demo results (API slow)
               </span>
             )}
           </div>
-          <ol className="space-y-2 list-decimal list-inside">
+          <ol className="space-y-3 list-decimal list-inside text-gray-700">
             {recs.map((r, i) => (
-              <li key={i}>
-                <span className="font-medium">{r.title}</span> — {r.artist}
+              <li key={i} className="leading-relaxed">
+                <span className="font-semibold text-gray-900">{r.title}</span> — {r.artist}
                 {r.rationale ? (
-                  <span className="text-gray-500"> · {r.rationale}</span>
+                  <span className="text-gray-600"> · {r.rationale}</span>
                 ) : null}
               </li>
             ))}
@@ -499,55 +515,63 @@ export default function AudioPage() {
       {/* Behind the tech modal */}
       {showAbout && (
         <div
-          className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
           onClick={() => setShowAbout(false)}
         >
           <div
-            className="w-full max-w-2xl rounded-2xl bg-white shadow-xl p-6"
+            className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl p-6 space-y-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold">Behind the tech</h3>
+            <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+              <h3 className="text-xl font-bold text-gray-900">Behind the Tech</h3>
               <button
-                className="rounded-full border px-3 py-1 text-sm"
+                className="px-3 py-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
                 onClick={() => setShowAbout(false)}
               >
-                Close
+                ✕
               </button>
             </div>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
+            <ol className="list-decimal list-inside space-y-2.5 text-sm text-gray-700">
               <li>
-                <b>Data curation:</b> Scraped and unified thousands of track
+                <span className="font-semibold text-gray-900">Data curation:</span> Scraped and unified thousands of track
                 previews with metadata to build a benchmark dataset for
                 supervised learning.
               </li>
               <li>
-                <b>Embedding model:</b> Fine-tuned PANNs (Pretrained Audio
+                <span className="font-semibold text-gray-900">Embedding model:</span> Fine-tuned PANNs (Pretrained Audio
                 Neural Networks, CNN14) via transfer learning for high-quality
                 music representation and embeddings.
               </li>
               <li>
-                <b>Feature prediction:</b> Designed a multi-task linear head to
+                <span className="font-semibold text-gray-900">Feature prediction:</span> Designed a multi-task linear head to
                 predict Spotify-style attributes (danceability, energy,
                 acousticness, etc.) directly from embeddings.
               </li>
               <li>
-                <b>Recommendation engine:</b> Integrated predicted features with
+                <span className="font-semibold text-gray-900">Recommendation engine:</span> Integrated predicted features with
                 the Spotify Web API to retrieve musically aligned candidate
                 songs.
               </li>
               <li>
-                <b>LLM curation:</b> Leveraged OpenAI GPT to refine candidates,
+                <span className="font-semibold text-gray-900">LLM curation:</span> Leveraged OpenAI GPT to refine candidates,
                 generate concise rationales, and present human-like
                 recommendations.
               </li>
               <li>
-                <b>Stack & Deployment:</b> FastAPI microservice for inference
+                <span className="font-semibold text-gray-900">Stack & Deployment:</span> FastAPI microservice for inference
                 deployed on Render; frontend built with Next.js (App Router) and
                 TailwindCSS; hosted on Vercel with GitHub CI/CD pipelines
                 enabling cloud-native, automated, and scalable deployments.
               </li>
             </ol>
+            <div className="flex justify-end pt-2">
+              <button
+                className="px-6 py-2.5 rounded-lg bg-gray-900 text-white hover:bg-gray-800 font-medium transition-colors"
+                onClick={() => setShowAbout(false)}
+              >
+                Got it
+              </button>
+            </div>
           </div>
         </div>
       )}

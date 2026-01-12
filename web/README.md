@@ -1,36 +1,140 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Multimodal AI Discovery Platform
 
-## Getting Started
+A production-ready AI platform featuring intelligent recommendation systems powered by advanced technologies including RAG, fine-tuned neural networks, and semantic search.
 
-First, run the development server:
+Built by [Prajeet Darda](https://www.linkedin.com/in/prajeet-darda) | [GitHub](https://github.com/prajeetdarda) | prajeetdarda@gmail.com
 
+## 🚀 Live Demo
+
+Visit the live application: [AI Discovery Platform](https://auto-crm-project.vercel.app)
+
+## ✨ Features
+
+### 🎬 Movie Recommender
+RAG-based semantic search powered by LangChain, Pinecone, and OpenSearch
+- **Semantic retrieval** with vector embeddings
+- **Sub-second latency** on AWS Lambda
+- Handles **1k+ daily queries** efficiently
+- Hybrid search combining vector similarity and keyword matching
+
+### 🎵 Audio-Based Music Discovery
+Fine-tuned PANNs (CNN14) for intelligent playlist generation from audio features
+- **95% accuracy** in audio feature detection
+- Trained on **6k+ tracks** with custom ML pipeline
+- **Personalized recommendations** via GPT integration
+- Real-time audio analysis and feature extraction
+
+## 🛠️ Technology Stack
+
+| Technology | Purpose |
+|------------|---------|
+| **LangGraph** | Orchestration |
+| **LangChain** | AI Framework |
+| **OpenAI GPT-4o** | LLM Engine |
+| **Next.js 15** | React Framework |
+| **TypeScript** | Type Safety |
+| **SQLite** | Database |
+| **Tailwind CSS** | Styling |
+| **Pinecone** | Vector Database |
+| **OpenSearch** | Keyword Search |
+| **AWS Lambda** | Serverless Functions |
+| **AWS S3** | Data Storage |
+| **FastAPI** | ML Inference API |
+| **PANNs (CNN14)** | Audio Neural Networks |
+
+## 📋 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- npm/yarn/pnpm/bun
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/prajeetdarda/AI-Project.git
+cd AI-Project/web
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+```
+
+Add your API keys:
+- OpenAI API key
+- Pinecone API key
+- AWS credentials
+- FastAPI endpoint URL
+
+4. Run the development server:
 ```bash
 npm run dev
 # or
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🎯 Key Features
 
-## Learn More
+### Movie Recommender (RAG)
+1. **Intent parsing**: LLM interprets queries and extracts relevant genres/keywords
+2. **Hybrid retrieval**: Searches Pinecone (semantic) and OpenSearch (keyword BM25)
+3. **Grounded generation**: LangChain prompts LLM with citations
+4. **AWS automation**: Lambda functions auto-refresh embeddings and indexes
 
-To learn more about Next.js, take a look at the following resources:
+### Audio Discovery (ML Pipeline)
+1. **Data curation**: Scraped 6k+ tracks with metadata
+2. **Embedding model**: Fine-tuned PANNs (CNN14) via transfer learning
+3. **Feature prediction**: Multi-task head predicts Spotify-style attributes
+4. **Recommendation engine**: Integrated with Spotify Web API
+5. **LLM curation**: GPT refines candidates with rationales
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🚢 Deployment
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The application is deployed on:
+- **Frontend**: Vercel
+- **ML Inference**: Render (FastAPI)
+- **Cloud Functions**: AWS Lambda
+- **Storage**: AWS S3
 
-## Deploy on Vercel
+## 📊 Performance Metrics
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Movie Recommender**: Sub-second latency, 1k+ daily queries
+- **Audio Model**: 95% accuracy in feature detection
+- **Dataset**: 6k+ tracks processed and analyzed
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📝 License
+
+This project is open source and available under the MIT License.
+
+## 👤 Author
+
+**Prajeet Darda**
+- LinkedIn: [linkedin.com/in/prajeet-darda](https://www.linkedin.com/in/prajeet-darda)
+- GitHub: [github.com/prajeetdarda](https://github.com/prajeetdarda)
+- Email: prajeetdarda@gmail.com
+
+## 🙏 Acknowledgments
+
+- OpenAI for GPT-4o
+- Pinecone for vector database
+- AWS for cloud infrastructure
+- Vercel for hosting platform
